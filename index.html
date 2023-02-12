@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+   
+
+<title>Chess Timer</title>
+	<style>
+		#player1, #player2{
+			height:45%;
+			width:97vw;
+			background-color:blue;
+			color: white;
+			font-size:50px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			
+		}
+		
+		#spacer{
+			background-color: white;
+			height: 10%;
+			width: 100vw;
+		}
+		#timer{
+			width: 100%;
+			display:flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+		}
+	</style>
+</head>
+<body>
+	
+	<div id="timer">
+	
+		<div id="player1" class="m-3">
+		</div>
+		<div id="spacer">
+		</div>
+		<div id="player2" class="m-3">
+		</div>
+		
+	</div>
+	
+	<script >
+		var vheight =  $(document).innerHeight();
+		$("#timer").css("height", vheight.toString() +"px");
+		$("#player2").css("background-color", "#99999b");
+		$("#player1").css("background-color", "#99999b");
+		
+		var time_in_minutes = 10;
+		var count = 0;
+		var current_time;
+		var firstPlayerDeadline;
+		var secondPlayerDeadline;
+
+		var firstPlayerTimeLeft;
+		var secondPlayerTimeLeft;
+
+
+		function time_remaining(endtime){
+			var t = Date.parse(endtime) - Date.parse(new Date());
+			var seconds = Math.floor( (t/1000) % 60 );
+			var minutes = Math.floor( (t/1000/60) % 60 );
+			var hours = Math.floor( (t/(1000*60*60)) % 24 );
+			var days = Math.floor( t/(1000*60*60*24) );
+			return {'total':t, 'days':days, 'hours':hours, 'minutes':minutes, 'seconds':seconds};
+		}
+		
+		function timeLeft(endtime){
+			var t = Date.parse(endtime) - Date.parse(new Date());
+			return t;
+		}
+
+		var timeinterval;
+		function run_clock(id,endtime){
+		
+			var clock = document.getElementById(id);
+			
+			function update_clock(){
+				var t = time_remaining(endtime);
+				clock.innerHTML = t.minutes+' : '+t.seconds;
+				if(t.total<=0){ clearInterval(timeinterval); }
+			}
+			update_clock(); // run function once at first to avoid delay
+			timeinterval = setInterval(update_clock,1000);
+		}
+		
+		function initPlayersTime(id){
+			var clock = document.getElementById(id);
+			current_time = Date.parse(new Date());
+			var t = time_remaining(new Date(current_time + time_in_minutes*60*1000));
+			clock.innerHTML = t.minutes+' : '+t.seconds;
+		}
+		
+		initPlayersTime("player1");
+		initPlayersTime("player2");
+		
+		function initialize(){
+			current_time = Date.parse(new Date());
+			firstPlayerDeadline = new Date(current_time + time_in_minutes*60*1000);
+			secondPlayerDeadline = new Date(current_time + time_in_minutes*60*1000);
+
+			firstPlayerTimeLeft = time_in_minutes*60*1000;
+			secondPlayerTimeLeft = time_in_minutes*60*1000;
+		}
+		
+		var isAnyOneStarted = false;
+		var isFirstPlayerTurn = false;
+		var isSecondPlayerTurn = false;
+
+		function player1_clock(){
+			if (isFirstPlayerTurn){
+				return;
+			}
+			if (count == 0){
+				initialize();
+				count = count +1;
+				player2_clock();
+				return;
+			}
+			
+			if (isAnyOneStarted){
+				clearInterval(timeinterval);
+			}
+			isSecondPlayerTurn = false;
+			isFirstPlayerTurn = true;
+			
+			isAnyOneStarted = true;
+			secondPlayerTimeLeft = time_remaining(secondPlayerDeadline).total;
+			firstPlayerDeadline = new Date(Date.parse(new Date()) + firstPlayerTimeLeft);
+			run_clock('player1',firstPlayerDeadline);
+			$("#player1").css("background-color", "#0000ff");
+			$("#player2").css("background-color", "#99999b");
+
+		}
+
+		function player2_clock(){
+			if (isSecondPlayerTurn){
+				return;
+			}
+			
+			if (count == 0){
+				initialize();
+				count = count + 1;
+				player1_clock();
+				return;
+			}
+		
+			if (isAnyOneStarted){
+				clearInterval(timeinterval);
+			}
+			isSecondPlayerTurn = true;
+			isFirstPlayerTurn = false;
+			isAnyOneStarted = true;
+			firstPlayerTimeLeft = time_remaining(firstPlayerDeadline).total;
+			secondPlayerDeadline = new Date(Date.parse(new Date()) + secondPlayerTimeLeft);
+			run_clock('player2',secondPlayerDeadline);
+			$("#player1").css("background-color", "#99999b");
+			$("#player2").css("background-color", "#0000ff");
+		}
+
+		// handle pause and resume button clicks
+		document.getElementById('player1').onclick = player2_clock;
+		document.getElementById('player2').onclick = player1_clock;
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+
+</body>
+</html>
